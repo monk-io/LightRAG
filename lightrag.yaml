@@ -1,0 +1,43 @@
+namespace: lightrag
+
+base:
+  defines: runnable
+  metadata:
+    name: LightRAG
+    description: |
+      Reusable LightRAG component. LightRAG is a simple and fast retrieval-augmented generation server that combines knowledge graphs with vector retrieval. Inherit this runnable from AI, RAG, and knowledge-graph stacks that need a self-contained LightRAG API service. The server starts without LLM API keys; configure them in the inheriting template when an LLM backend is required.
+    tags: rag, knowledge-graph, llm, retrieval, ai
+    website: https://github.com/HKUDS/LightRAG
+    source: https://github.com/HKUDS/LightRAG
+    publisher: monk.io
+    private: false
+  variables:
+    host:
+      type: string
+      env: HOST
+      value: "0.0.0.0"
+      description: Address the LightRAG API server binds to inside the container.
+    port:
+      type: int
+      env: PORT
+      value: 9621
+      description: HTTP API port LightRAG listens on inside the container.
+    storage-volume-name:
+      type: string
+      value: lightrag
+      description: Name of the Monk volume subdirectory used for persistent LightRAG data.
+  containers:
+    main:
+      image: ghcr.io/hkuds/lightrag:latest
+      paths:
+        - <- `${volume-path}/${storage-volume-name}/rag_storage:/app/data/rag_storage`
+        - <- `${volume-path}/${storage-volume-name}/inputs:/app/data/inputs`
+        - <- `${volume-path}/${storage-volume-name}/prompts:/app/data/prompts`
+      restart: unless-stopped
+      privileged: false
+  services:
+    http:
+      container: main
+      port: <- $port
+      protocol: tcp
+      description: Internal LightRAG REST and Web UI endpoint for Monk connections.

@@ -1,0 +1,5 @@
+LOAD lightrag.yaml
+LOAD lightrag-example.yaml
+LOAD lightrag-stack.yaml
+
+ENTRY lightrag/stack-local

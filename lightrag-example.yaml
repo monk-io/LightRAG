@@ -1,0 +1,31 @@
+namespace: lightrag
+
+example-local:
+  defines: runnable
+  inherits: lightrag/base
+  metadata:
+    name: LightRAG Local Component Example
+    description: |
+      Example dependency flavor that inherits the reusable LightRAG base component and publishes the REST endpoint on a local host port for development and smoke testing.
+    tags: rag, knowledge-graph, llm, retrieval, example, local
+    website: https://github.com/HKUDS/LightRAG
+    source: https://github.com/HKUDS/LightRAG
+    publisher: monk.io
+    private: false
+  variables:
+    host-http-port:
+      type: int
+      value: 9622
+      description: Non-privileged host port published by the local component example for the LightRAG HTTP API.
+    storage-volume-name:
+      type: string
+      value: lightrag-example-local
+      description: Name of the Monk volume subdirectory used for persistent data in the local component example.
+  services:
+    http:
+      container: main
+      port: <- $port
+      protocol: tcp
+      publish: true
+      host-port: <- $host-http-port
+      description: Published local LightRAG REST and Web UI endpoint for component verification.

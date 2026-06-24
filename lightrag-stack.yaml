@@ -1,0 +1,55 @@
+namespace: lightrag
+
+stack:
+  defines: runnable
+  inherits: lightrag/base
+  metadata:
+    name: LightRAG Standalone Stack
+    description: |
+      Production-oriented standalone LightRAG deployment with persistent storage and no public service exposure by default. Inherit this stack when adding an authenticated ingress or a private application connection.
+    tags: rag, knowledge-graph, llm, retrieval, standalone, production
+    website: https://github.com/HKUDS/LightRAG
+    source: https://github.com/HKUDS/LightRAG
+    publisher: monk.io
+    private: false
+  variables:
+    storage-volume-name:
+      type: string
+      value: lightrag-stack
+      description: Name of the Monk volume subdirectory used for persistent data in the standalone stack.
+  services:
+    http:
+      container: main
+      port: <- $port
+      protocol: tcp
+      description: Private LightRAG REST and Web UI endpoint for trusted Monk connections.
+
+stack-local:
+  defines: runnable
+  inherits: lightrag/base
+  metadata:
+    name: LightRAG Standalone Local Stack
+    description: |
+      Local verification flavor of the standalone LightRAG stack. It publishes the REST endpoint on a non-privileged host port.
+    tags: rag, knowledge-graph, llm, retrieval, standalone, local
+    website: https://github.com/HKUDS/LightRAG
+    source: https://github.com/HKUDS/LightRAG
+    publisher: monk.io
+    private: false
+  variables:
+    host-http-port:
+      type: int
+      value: 9621
+      description: Non-privileged host port published by the local standalone flavor for the LightRAG HTTP API.
+    storage-volume-name:
+      type: string
+      value: lightrag-stack-local
+      description: Name of the Monk volume subdirectory used for persistent data in the local standalone flavor.
+  services:
+    http:
+      container: main
+      port: <- $port
+      protocol: tcp
+      publish: true
+      host-port: <- $host-http-port
+      description: Published local LightRAG REST and Web UI endpoint for standalone verification.
