@@ -3,10 +3,13 @@ namespace: lightrag
 base:
   defines: runnable
   metadata:
-    name: LightRAG
+    name: LightRAG Base
     description: |
-      Reusable LightRAG component. LightRAG is a simple and fast retrieval-augmented generation server that combines knowledge graphs with vector retrieval. Inherit this runnable from AI, RAG, and knowledge-graph stacks that need a self-contained LightRAG API service. The server starts without LLM API keys; configure them in the inheriting template when an LLM backend is required.
-    tags: rag, knowledge-graph, llm, retrieval, ai
+      Reusable LightRAG API and Web UI runtime using the public GHCR image.
+      The base is self-contained with LightRAG's default file-backed JSON,
+      NetworkX, and NanoVectorDB storage. Production deployments may inherit it
+      and add authentication, ingress, or external storage settings.
+    tags: rag, knowledge-graph, llm, retrieval, ai, standalone
     website: https://github.com/HKUDS/LightRAG
     source: https://github.com/HKUDS/LightRAG
     publisher: monk.io
@@ -16,16 +19,56 @@ base:
       type: string
       env: HOST
       value: "0.0.0.0"
-      description: Address the LightRAG API server binds to inside the container.
+      description: Address the LightRAG server binds inside the container.
     port:
       type: int
       env: PORT
       value: 9621
-      description: HTTP API port LightRAG listens on inside the container.
+      description: HTTP API and Web UI port LightRAG listens on inside the container.
+    working-dir:
+      type: string
+      env: WORKING_DIR
+      value: /app/data/rag_storage
+      description: Container path for LightRAG persistent runtime storage.
+    input-dir:
+      type: string
+      env: INPUT_DIR
+      value: /app/data/inputs
+      description: Container path for uploaded source documents.
+    prompt-dir:
+      type: string
+      env: PROMPT_DIR
+      value: /app/data/prompts
+      description: Container path for optional prompt override files.
+    summary-language:
+      type: string
+      env: SUMMARY_LANGUAGE
+      value: English
+      description: Language used for generated entity and relationship summaries.
+    kv-storage:
+      type: string
+      env: LIGHTRAG_KV_STORAGE
+      value: JsonKVStorage
+      description: LightRAG key-value storage implementation.
+    doc-status-storage:
+      type: string
+      env: LIGHTRAG_DOC_STATUS_STORAGE
+      value: JsonDocStatusStorage
+      description: LightRAG document status storage implementation.
+    graph-storage:
+      type: string
+      env: LIGHTRAG_GRAPH_STORAGE
+      value: NetworkXStorage
+      description: LightRAG graph storage implementation.
+    vector-storage:
+      type: string
+      env: LIGHTRAG_VECTOR_STORAGE
+      value: NanoVectorDBStorage
+      description: LightRAG vector storage implementation.
     storage-volume-name:
       type: string
       value: lightrag
-      description: Name of the Monk volume subdirectory used for persistent LightRAG data.
+      description: Name of the Monk volume subdirectory used for LightRAG data.
   containers:
     main:
       image: ghcr.io/hkuds/lightrag:latest
@@ -40,4 +83,5 @@ base:
       container: main
       port: <- $port
       protocol: tcp
-      description: Internal LightRAG REST and Web UI endpoint for Monk connections.
+      publish: false
+      description: Private LightRAG REST API and Web UI endpoint for Monk connections.
