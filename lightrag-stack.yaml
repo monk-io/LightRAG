@@ -4,10 +4,13 @@ stack:
   defines: runnable
   inherits: lightrag/base
   metadata:
-    name: LightRAG Standalone Stack
+    name: LightRAG Production Stack
     description: |
-      Production-oriented standalone LightRAG deployment with persistent storage and no public service exposure by default. Inherit this stack when adding an authenticated ingress or a private application connection.
-    tags: rag, knowledge-graph, llm, retrieval, standalone, production
+      Secure production-oriented standalone LightRAG stack. It uses persistent
+      file-backed storage and exposes HTTP only through Monk ingress. Set the
+      sensitive lightrag-api-key, lightrag-auth-accounts, and
+      lightrag-token-secret secrets before inheriting this for production.
+    tags: rag, knowledge-graph, llm, retrieval, standalone, production, ingress
     website: https://github.com/HKUDS/LightRAG
     source: https://github.com/HKUDS/LightRAG
     publisher: monk.io
@@ -16,35 +19,66 @@ stack:
     storage-volume-name:
       type: string
       value: lightrag-stack
-      description: Name of the Monk volume subdirectory used for persistent data in the standalone stack.
+      description: Name of the Monk volume subdirectory used for production LightRAG data.
+    api-key:
+      type: string
+      env: LIGHTRAG_API_KEY
+      value: <- secret("lightrag-api-key")
+      description: Sensitive API key; set lightrag-api-key when inheriting for authenticated production API access.
+    auth-accounts:
+      type: string
+      env: AUTH_ACCOUNTS
+      value: <- secret("lightrag-auth-accounts")
+      description: Sensitive Web UI account list; set lightrag-auth-accounts when inheriting for authenticated production UI access.
+    token-secret:
+      type: string
+      env: TOKEN_SECRET
+      value: <- secret("lightrag-token-secret")
+      description: Sensitive JWT signing secret; set lightrag-token-secret when inheriting for production Web UI sessions.
+  permitted-secrets:
+    lightrag-api-key: true
+    lightrag-auth-accounts: true
+    lightrag-token-secret: true
   services:
     http:
       container: main
       port: <- $port
       protocol: tcp
-      description: Private LightRAG REST and Web UI endpoint for trusted Monk connections.
+      publish: false
+      description: LightRAG REST API and Web UI endpoint exposed only through Monk ingress in production.
+      ingress-routes:
+        app:
+          path-prefix: /
+  checks:
+    readiness:
+      code: http-get-service("lightrag/stack", "http", "/health") get-member("status") 200
+      period: 10
+      initialDelay: 20
+      attempts: 60
 
-stack-local:
+stack-local-v2:
   defines: runnable
   inherits: lightrag/base
   metadata:
-    name: LightRAG Standalone Local Stack
+    name: LightRAG Local Stack
     description: |
-      Local verification flavor of the standalone LightRAG stack. It publishes the REST endpoint on a non-privileged host port.
+      Local verification flavor for the standalone LightRAG stack. It uses the
+      same public LightRAG image and self-contained storage defaults, and
+      publishes a non-privileged host port for external HTTP health checks.
     tags: rag, knowledge-graph, llm, retrieval, standalone, local
     website: https://github.com/HKUDS/LightRAG
     source: https://github.com/HKUDS/LightRAG
     publisher: monk.io
     private: false
   variables:
-    host-http-port:
-      type: int
-      value: 9621
-      description: Non-privileged host port published by the local standalone flavor for the LightRAG HTTP API.
     storage-volume-name:
       type: string
-      value: lightrag-stack-local
-      description: Name of the Monk volume subdirectory used for persistent data in the local standalone flavor.
+      value: lightrag-stack-local-v2
+      description: Name of the Monk volume subdirectory used for local LightRAG data.
+    host-http-port:
+      type: int
+      value: 9622
+      description: Non-privileged host port published for local LightRAG verification.
   services:
     http:
       container: main
@@ -52,4 +86,10 @@ stack-local:
       protocol: tcp
       publish: true
       host-port: <- $host-http-port
-      description: Published local LightRAG REST and Web UI endpoint for standalone verification.
+      description: Published local LightRAG REST API and Web UI endpoint for verification.
+  checks:
+    readiness:
+      code: http-get-service("lightrag/stack-local-v2", "http", "/health") get-member("status") 200
+      period: 10
+      initialDelay: 20
+      attempts: 60
