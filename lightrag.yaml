@@ -65,19 +65,25 @@ base:
       env: LIGHTRAG_VECTOR_STORAGE
       value: NanoVectorDBStorage
       description: LightRAG vector storage implementation.
-    storage-volume-name:
-      type: string
-      value: lightrag
-      description: Name of the Monk volume subdirectory used for LightRAG data.
   containers:
     main:
       image: ghcr.io/hkuds/lightrag:latest
-      paths:
-        - <- `${volume-path}/${storage-volume-name}/rag_storage:/app/data/rag_storage`
-        - <- `${volume-path}/${storage-volume-name}/inputs:/app/data/inputs`
-        - <- `${volume-path}/${storage-volume-name}/prompts:/app/data/prompts`
+      mounted-volumes:
+        rag-storage:
+          path: /app/data/rag_storage
+        inputs:
+          path: /app/data/inputs
+        prompts:
+          path: /app/data/prompts
       restart: unless-stopped
       privileged: false
+  volumes:
+    rag-storage:
+      kind: local
+    inputs:
+      kind: local
+    prompts:
+      kind: local
   services:
     http:
       container: main
