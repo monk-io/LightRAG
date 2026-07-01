@@ -76,7 +76,6 @@ stack-local-v2:
       container: main
       port: <- $port
       protocol: tcp
-      publish: true
       host-port: <- $host-http-port
       description: Published local LightRAG REST API and Web UI endpoint for verification.
   checks:
